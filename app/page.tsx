@@ -255,27 +255,51 @@ export default function Home() {
     <meta charset="UTF-8">
     <title>AIO Check-up Tam Rapor - ${date}</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; max-width: 1000px; margin: 0 auto; padding: 40px; background: #f8fafc; }
-        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 32px; border: 1px solid #e2e8f0; }
-        .header { text-align: center; margin-bottom: 48px; }
+        :root { --primary: #4f46e5; --bg: #f8fafc; --text: #334155; --border: #e2e8f0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: var(--text); max-width: 1000px; margin: 0 auto; padding: 40px; background: var(--bg); }
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 32px; border: 1px solid var(--border); }
+        .header { text-align: center; margin-bottom: 48px; position: relative; }
+        .print-btn { position: absolute; right: 0; top: 0; background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgb(79 70 229 / 0.3); transition: all 0.2s; }
+        .print-btn:hover { background: #4338ca; transform: translateY(-1px); }
         .stats-grid { display: grid; grid-template-cols: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
-        .stat-card { background: #f1f5f9; padding: 20px; border-radius: 12px; text-align: center; }
-        .stat-value { font-size: 24px; font-weight: 800; color: #4f46e5; }
-        .stat-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        h1, h2, h3 { color: #1e293b; }
-        pre { background: #0f172a; color: #cbd5e1; padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-        th { background: #f8fafc; font-weight: 700; }
-        .debug-entry { margin-bottom: 24px; border-left: 4px solid #6366f1; padding-left: 16px; }
-        .debug-label { font-weight: 800; color: #6366f1; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
-        .page-entry { border-bottom: 1px solid #e2e8f0; padding: 24px 0; }
-        .page-url { color: #4f46e5; font-size: 14px; word-break: break-all; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #e0e7ff; color: #4338ca; }
+        .stat-card { background: #f1f5f9; padding: 24px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-value { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 4px; }
+        .stat-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        h1, h2, h3 { color: #0f172a; margin-top: 0; }
+        h2 { border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+        pre { background: #0f172a; color: #cbd5e1; padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #1e293b; }
+        table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+        th, td { border: 1px solid var(--border); padding: 16px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; color: #475569; }
+        td { background: white; }
+        .debug-entry { margin-bottom: 32px; border-left: 4px solid var(--primary); padding-left: 20px; background: #f8fafc; padding: 20px 20px 20px 24px; border-radius: 0 12px 12px 0; }
+        .debug-label { font-weight: 800; color: var(--primary); text-transform: uppercase; font-size: 13px; margin-bottom: 12px; letter-spacing: 0.05em; }
+        .page-entry { border-bottom: 1px solid var(--border); padding: 32px 0; }
+        .page-entry:last-child { border-bottom: none; padding-bottom: 0; }
+        .page-url { color: var(--primary); font-size: 14px; word-break: break-all; margin-bottom: 16px; font-family: monospace; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #e0e7ff; color: #4338ca; margin-bottom: 12px; }
+        .content-box { font-size: 13px; color: #475569; background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 16px; border: 1px solid var(--border); }
+
+        @media print {
+            body { background: white; padding: 0; max-width: none; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 40px; page-break-inside: avoid; }
+            .print-btn { display: none; }
+            .stats-grid { page-break-inside: avoid; }
+            .stat-card { border: 2px solid #000; background: white; }
+            pre { background: white; color: black; border: 1px solid #ccc; white-space: pre-wrap; word-break: break-word; }
+            .debug-entry { background: white; border-left: 4px solid #000; padding: 10px 0 10px 16px; page-break-inside: avoid; }
+            .page-entry { page-break-inside: avoid; border-bottom: 1px solid #ccc; }
+            .content-box { background: white; border: 1px solid #ccc; }
+            table, th, td { border: 1px solid #000; }
+            th { background: #eee; color: #000; }
+            h1, h2, h3, .stat-value, .debug-label, .page-url { color: #000; }
+            .badge { border: 1px solid #000; background: white; color: #000; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
+        <button class="print-btn" onclick="window.print()">🖨️ Yazdır / PDF Kaydet</button>
         <h1 style="margin-bottom: 8px;">AIO Check-up Analiz Raporu</h1>
         <p style="color: #64748b;">Oluşturulma Tarihi: ${date}</p>
     </div>
@@ -304,7 +328,7 @@ export default function Home() {
         ${pagesHtml}
     </div>
 
-    <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 12px;">
+    <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 12px; page-break-inside: avoid;">
         &copy; ${year} AIO Check-up Tool - Tüm hakları saklıdır.
     </footer>
 </body>
