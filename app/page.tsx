@@ -211,6 +211,114 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
+  const exportFullReportHTML = () => {
+    const totalChars = crawledPages.reduce((sum, p) => sum + p.bodyTextLength, 0);
+    const date = new Date().toLocaleString('tr-TR');
+    
+    // Basit bir Markdown -> HTML dönüştürücü (Tablo desteği ile)
+    const simpleMarkdownToHTML = (md: string) => {
+      if (!md) return '';
+      return md
+        .replace(/### (.*)/g, '<h3 style="color: #6366f1; margin-top: 24px;">$1</h3>')
+        .replace(/## (.*)/g, '<h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 32px;">$1</h2>')
+        .replace(/# (.*)/g, '<h1 style="color: #1e1b4b; text-align: center; margin-bottom: 40px;">$1</h1>')
+        .replace(/\*\*(.*)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.*)`/g, '<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">$1</code>')
+        .replace(/\|/g, '</td><td>')
+        .replace(/\n/g, '<br>')
+        .replace(/<\/td><td><br>/g, '</td></tr><tr><td>')
+        .replace(/<tr><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><\/tr>/g, '');
+    };
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>AIO Check-up Tam Rapor - \${date}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; max-width: 1000px; margin: 0 auto; padding: 40px; background: #f8fafc; }
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 32px; border: 1px solid #e2e8f0; }
+        .header { text-align: center; margin-bottom: 48px; }
+        .stats-grid { display: grid; grid-template-cols: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: #f1f5f9; padding: 20px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: 800; color: #4f46e5; }
+        .stat-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        h1, h2, h3 { color: #1e293b; }
+        pre { background: #0f172a; color: #cbd5e1; padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; }
+        .debug-entry { margin-bottom: 24px; border-left: 4px solid #6366f1; padding-left: 16px; }
+        .debug-label { font-weight: 800; color: #6366f1; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
+        .page-entry { border-bottom: 1px solid #e2e8f0; padding: 24px 0; }
+        .page-url { color: #4f46e5; font-size: 14px; word-break: break-all; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #e0e7ff; color: #4338ca; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="margin-bottom: 8px;">AIO Check-up Analiz Raporu</h1>
+        <p style="color: #64748b;">Oluşturulma Tarihi: \${date}</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">\${crawledPages.length}</div><div class="stat-label">Sayfa</div></div>
+        <div class="stat-card"><div class="stat-value">\${totalChars.toLocaleString()}</div><div class="stat-label">Karakter</div></div>
+        <div class="stat-card"><div class="stat-value">\${selectedModel.split('/').pop()}</div><div class="stat-label">Model</div></div>
+        <div class="stat-card"><div class="stat-value">\${industry || 'Belirtilmedi'}</div><div class="stat-label">Sektör</div></div>
+    </div>
+
+    <div class="card">
+        <h2>🤖 Yapay Zeka Analiz Sonucu</h2>
+        <div class="analysis-content">
+            \${simpleMarkdownToHTML(analysisResult || 'Analiz sonucu bulunamadı.')}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Teknik Veri & AI İletişim Kayıtları (Debug)</h2>
+        \${debugLogs.map(log => \`
+            <div class="debug-entry">
+                <div class="debug-label">\${log.label}</div>
+                <pre>\${log.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            </div>
+        \`).join('')}
+    </div>
+
+    <div class="card">
+        <h2>🌐 Taranan Site İçeriği</h2>
+        \${crawledPages.map((page, idx) => \`
+            <div class="page-entry">
+                <div class="badge">SAYFA \${idx + 1}</div>
+                <h3 style="margin: 12px 0 4px 0;">\${page.title || 'Başlıksız'}</h3>
+                <div class="page-url">\${page.url}</div>
+                <p><strong>H1:</strong> \${page.h1 || '---'}</p>
+                <p><strong>Açıklama:</strong> \${page.description || '---'}</p>
+                <div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                    \${page.bodyText.substring(0, 1000)}\${page.bodyText.length > 1000 ? '...' : ''}
+                </div>
+            </div>
+        \`).join('')}
+    </div>
+
+    <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 12px;">
+        © \${new Date().getFullYear()} AIO Check-up Tool - Tüm hakları saklıdır.
+    </footer>
+</body>
+</html>\`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = \`aio_tam_rapor_\${new Date().getTime()}.html\`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const totalChars = crawledPages.reduce((sum, p) => sum + p.bodyTextLength, 0);
 
   return (
@@ -398,6 +506,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
               <h2 className="text-3xl font-black text-white tracking-tight">Taranan İçerik Arşivi</h2>
               <div className="flex gap-3">
+                <button onClick={exportFullReportHTML} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-xs font-bold transition-all uppercase tracking-widest shadow-lg shadow-indigo-600/20">💎 TAM RAPOR (HTML)</button>
                 <button onClick={copyToClipboard} className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-xs font-bold transition-all uppercase tracking-widest">📋 Kopyala</button>
                 <button onClick={downloadFile} className="px-6 py-3 bg-emerald-600/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-600/20 rounded-2xl text-xs font-bold transition-all uppercase tracking-widest">📥 İndir (.md)</button>
               </div>
