@@ -51,7 +51,7 @@ export default function Home() {
     setCrawledPages([]);
     setError(null);
     setAnalysisResult(null);
-    setSentDataToAI(null);
+    setDebugLogs([]);
     setStatusMessage("Tarayıcı (Playwright) başlatılıyor...");
     setIsDone(false);
 
