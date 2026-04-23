@@ -218,16 +218,58 @@ export default function Home() {
     // Basit bir Markdown -> HTML dönüştürücü (Tablo desteği ile)
     const simpleMarkdownToHTML = (md: string) => {
       if (!md) return '';
-      return md
-        .replace(/### (.*)/g, '<h3 style="color: #6366f1; margin-top: 24px;">$1</h3>')
-        .replace(/## (.*)/g, '<h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 32px;">$1</h2>')
-        .replace(/# (.*)/g, '<h1 style="color: #1e1b4b; text-align: center; margin-bottom: 40px;">$1</h1>')
-        .replace(/\*\*(.*)\*\*/g, '<strong>$1</strong>')
-        .replace(/`(.*)`/g, '<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">$1</code>')
-        .replace(/\|/g, '</td><td>')
-        .replace(/\n/g, '<br>')
-        .replace(/<\/td><td><br>/g, '</td></tr><tr><td>')
-        .replace(/<tr><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><\/tr>/g, '');
+      let html = '';
+      let inTable = false;
+      let isFirstTableRow = false;
+
+      const lines = md.split('\\n');
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+
+        if (line.startsWith('|')) {
+          if (!inTable) {
+            html += '<div style="overflow-x: auto;"><table>\\n';
+            inTable = true;
+            isFirstTableRow = true;
+          }
+          if (line.match(/^\\|[\\s\\-:]+\\|$/) || line.includes('---|')) {
+            continue;
+          }
+          
+          let row = line.substring(1, line.length - 1).split('|').map(c => c.trim());
+          if (isFirstTableRow) {
+             html += '<tr>' + row.map(c => '<th>' + c + '</th>').join('') + '</tr>\\n';
+             isFirstTableRow = false;
+          } else {
+             html += '<tr>' + row.map(c => '<td>' + c + '</td>').join('') + '</tr>\\n';
+          }
+        } else {
+          if (inTable) {
+            html += '</table></div>\\n';
+            inTable = false;
+          }
+
+          if (line.startsWith('### ')) {
+            html += '<h3 style="color: #6366f1; margin-top: 24px;">' + line.substring(4) + '</h3>\\n';
+          } else if (line.startsWith('## ')) {
+            html += '<h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 32px;">' + line.substring(3) + '</h2>\\n';
+          } else if (line.startsWith('# ')) {
+            html += '<h1 style="color: #1e1b4b; text-align: center; margin-bottom: 40px;">' + line.substring(2) + '</h1>\\n';
+          } else if (line.startsWith('> ')) {
+             html += '<blockquote style="border-left: 4px solid #cbd5e1; padding-left: 16px; color: #64748b; font-style: italic; margin: 16px 0;">' + line.substring(2) + '</blockquote>\\n';
+          } else if (line.startsWith('- ') || line.startsWith('* ')) {
+            html += '<li style="margin-left: 20px; margin-bottom: 8px;">' + line.substring(2) + '</li>\\n';
+          } else if (line.length > 0) {
+             html += '<p style="margin-bottom: 16px;">' + line + '</p>\\n';
+          }
+        }
+      }
+      if (inTable) {
+        html += '</table></div>\\n';
+      }
+      
+      return html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+                 .replace(/`(.*?)`/g, '<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 13px;">$1</code>');
     };
 
     const debugHtml = debugLogs.map(log => {
