@@ -230,12 +230,30 @@ export default function Home() {
         .replace(/<tr><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><td>---<\/td><\/tr>/g, '');
     };
 
+    const debugHtml = debugLogs.map(log => {
+      const safeContent = log.content.replace(new RegExp('<', 'g'), '&lt;').replace(new RegExp('>', 'g'), '&gt;');
+      return '<div class="debug-entry"><div class="debug-label">' + log.label + '</div><pre>' + safeContent + '</pre></div>';
+    }).join('');
+
+    const pagesHtml = crawledPages.map((page, idx) => {
+      const safeText = page.bodyText.substring(0, 1000) + (page.bodyText.length > 1000 ? '...' : '');
+      const h1Text = page.h1 || '---';
+      const descText = page.description || '---';
+      const titleText = page.title || 'Başlıksız';
+      return '<div class="page-entry"><div class="badge">SAYFA ' + (idx + 1) + '</div><h3 style="margin: 12px 0 4px 0;">' + titleText + '</h3><div class="page-url">' + page.url + '</div><p><strong>H1:</strong> ' + h1Text + '</p><p><strong>Açıklama:</strong> ' + descText + '</p><div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 16px; border-radius: 8px; margin-top: 12px;">' + safeText + '</div></div>';
+    }).join('');
+
+    const modelName = selectedModel.split('/').pop() || '';
+    const ind = industry || 'Belirtilmedi';
+    const analysisHtml = simpleMarkdownToHTML(analysisResult || 'Analiz sonucu bulunamadı.');
+    const year = new Date().getFullYear();
+
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AIO Check-up Tam Rapor - \${date}</title>
+    <title>AIO Check-up Tam Rapor - ${date}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; max-width: 1000px; margin: 0 auto; padding: 40px; background: #f8fafc; }
         .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 32px; border: 1px solid #e2e8f0; }
@@ -259,60 +277,44 @@ export default function Home() {
 <body>
     <div class="header">
         <h1 style="margin-bottom: 8px;">AIO Check-up Analiz Raporu</h1>
-        <p style="color: #64748b;">Oluşturulma Tarihi: \${date}</p>
+        <p style="color: #64748b;">Oluşturulma Tarihi: ${date}</p>
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value">\${crawledPages.length}</div><div class="stat-label">Sayfa</div></div>
-        <div class="stat-card"><div class="stat-value">\${totalChars.toLocaleString()}</div><div class="stat-label">Karakter</div></div>
-        <div class="stat-card"><div class="stat-value">\${selectedModel.split('/').pop()}</div><div class="stat-label">Model</div></div>
-        <div class="stat-card"><div class="stat-value">\${industry || 'Belirtilmedi'}</div><div class="stat-label">Sektör</div></div>
+        <div class="stat-card"><div class="stat-value">${crawledPages.length}</div><div class="stat-label">Sayfa</div></div>
+        <div class="stat-card"><div class="stat-value">${totalChars.toLocaleString()}</div><div class="stat-label">Karakter</div></div>
+        <div class="stat-card"><div class="stat-value">${modelName}</div><div class="stat-label">Model</div></div>
+        <div class="stat-card"><div class="stat-value">${ind}</div><div class="stat-label">Sektör</div></div>
     </div>
 
     <div class="card">
         <h2>🤖 Yapay Zeka Analiz Sonucu</h2>
         <div class="analysis-content">
-            \${simpleMarkdownToHTML(analysisResult || 'Analiz sonucu bulunamadı.')}
+            ${analysisHtml}
         </div>
     </div>
 
     <div class="card">
-        <h2>🛠️ Teknik Veri & AI İletişim Kayıtları (Debug)</h2>
-        \${debugLogs.map(log => \`
-            <div class="debug-entry">
-                <div class="debug-label">\${log.label}</div>
-                <pre>\${log.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-            </div>
-        \`).join('')}
+        <h2>🛠️ Teknik Veri &amp; AI İletişim Kayıtları (Debug)</h2>
+        ${debugHtml}
     </div>
 
     <div class="card">
         <h2>🌐 Taranan Site İçeriği</h2>
-        \${crawledPages.map((page, idx) => \`
-            <div class="page-entry">
-                <div class="badge">SAYFA \${idx + 1}</div>
-                <h3 style="margin: 12px 0 4px 0;">\${page.title || 'Başlıksız'}</h3>
-                <div class="page-url">\${page.url}</div>
-                <p><strong>H1:</strong> \${page.h1 || '---'}</p>
-                <p><strong>Açıklama:</strong> \${page.description || '---'}</p>
-                <div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 16px; border-radius: 8px; margin-top: 12px;">
-                    \${page.bodyText.substring(0, 1000)}\${page.bodyText.length > 1000 ? '...' : ''}
-                </div>
-            </div>
-        \`).join('')}
+        ${pagesHtml}
     </div>
 
     <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 12px;">
-        © \${new Date().getFullYear()} AIO Check-up Tool - Tüm hakları saklıdır.
+        &copy; ${year} AIO Check-up Tool - Tüm hakları saklıdır.
     </footer>
 </body>
-</html>\`;
+</html>`;
 
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = \`aio_tam_rapor_\${new Date().getTime()}.html\`;
+    a.download = `aio_tam_rapor_${new Date().getTime()}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
