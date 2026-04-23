@@ -27,14 +27,19 @@ Generate 10 high-intent, long-tail questions a real customer would type into an 
 
 For each question, simulate how ChatGPT or Perplexity would naturally answer (list 2-4 real companies from memory). Check if the target company appears.
 
+CRITICAL SCORING RULE (NO HALLUCINATIONS):
+You MUST NOT score "Birincil Öneri" or "İkincil Öneri" UNLESS the target company's name ACTUALLY APPEARS in your generated text for "Yapay Zekanın Doğal Cevabı".
+If the exact target company name is NOT written in your answer text, you MUST score it "Hayır". Do not pretend it is mentioned if it is not.
+Also, provide a short 1-sentence justification (Gerekçe) explaining why you gave that score.
+
 Score each appearance:
 - "Birincil Öneri" = mentioned 1st or 2nd  
 - "İkincil Öneri" = mentioned 3rd or 4th
-- "Hayır" = not mentioned
+- "Hayır" = not mentioned in the text at all
 
 OUTPUT — Strict Markdown Table first:
-| # | Müşteri Sorusu | Yapay Zekanın Doğal Cevabı (Gerçek Firmalar) | Hedef Firma | Görünürlük |
-|---|----------------|----------------------------------------------|-------------|------------|
+| # | Müşteri Sorusu | Yapay Zekanın Doğal Cevabı (Gerçek Firmalar) | Hedef Firma | Görünürlük | Gerekçe |
+|---|----------------|----------------------------------------------|-------------|------------|---------|
 
 Then a JSON block:
 \`\`\`json
